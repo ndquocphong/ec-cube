@@ -34,6 +34,7 @@ use Eccube\Entity\ProductImage;
 use Eccube\Entity\ProductStock;
 use Eccube\Entity\ProductTag;
 use Eccube\Exception\CsvImportException;
+use Eccube\Repository\CategoryRepository;
 use Eccube\Service\CsvImportService;
 use Eccube\Util\Str;
 use Symfony\Component\Filesystem\Filesystem;
@@ -454,6 +455,10 @@ class CsvImportController
 
                     $this->em->getConnection()->beginTransaction();
 
+                    /** @var $category CategoryRepository*/
+                    $category = $app['eccube.repository.category'];
+                    $max = $category->createQueryBuilder('c')
+                        ->select('Max(c.rank) as rank')->getQuery()->getSingleScalarResult();
                     // CSVファイルの登録処理
                     foreach ($data as $row) {
 
@@ -481,6 +486,19 @@ class CsvImportController
 
                         }
 
+                        // Rank
+                        if (Str::isBlank($row['表示ランク'])) {
+                            if (!$Category->getRank()) {
+                                $max++;
+                                $Category->setRank($max);
+                            }
+                        } else {
+                            $Category->setRank(Str::trimAll($row['表示ランク']));
+                            if ($Category->getRank() > $max) {
+                                $max = $Category->getRank();
+                            }
+                        }
+
                         if (Str::isBlank($row['カテゴリ名'])) {
                             $this->addErrors(($data->key() + 1) . '行目のカテゴリ名が設定されていません。');
                             return $this->render($app, $form, $headers, $this->categoryTwig);
@@ -495,6 +513,7 @@ class CsvImportController
                                 return $this->render($app, $form, $headers, $this->categoryTwig);
                             }
 
+                            /** @var $ParentCategory Category*/
                             $ParentCategory = $app['eccube.repository.category']->find($row['親カテゴリID']);
                             if (!$ParentCategory) {
                                 $this->addErrors(($data->key() + 1) . '行目の親カテゴリIDが存在しません。');
@@ -506,11 +525,16 @@ class CsvImportController
                         }
 
                         $Category->setParent($ParentCategory);
-                        if ($ParentCategory) {
-                            $Category->setLevel($ParentCategory->getLevel() + 1);
-                        } else {
-                            $Category->setLevel(1);
+
+                        // Level
+                        $level = Str::trimAll($row['階層']);
+                        if (Str::isBlank($row['階層'])) {
+                            $level = 1;
+                            if ($ParentCategory) {
+                                $level = $ParentCategory->getLevel() + 1;
+                            }
                         }
+                        $Category->setLevel($level);
 
                         if ($app['config']['category_nest_level'] < $Category->getLevel()) {
                             $this->addErrors(($data->key() + 1) . '行目のカテゴリが最大レベルを超えているため設定できません。');
@@ -1149,8 +1173,10 @@ class CsvImportController
     {
         return array(
             'カテゴリID' => 'id',
+            '表示ランク' => 'rank',
             'カテゴリ名' => 'category_name',
             '親カテゴリID' => 'parent_category_id',
+            '階層' => 'level',
         );
     }
     
