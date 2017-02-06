@@ -527,12 +527,13 @@ class CsvImportController
                         $Category->setParent($ParentCategory);
 
                         // Level
-                        $level = Str::trimAll($row['階層']);
                         if (Str::isBlank($row['階層'])) {
                             $level = 1;
                             if ($ParentCategory) {
                                 $level = $ParentCategory->getLevel() + 1;
                             }
+                        } else {
+                            $level = Str::trimAll($row['階層']);
                         }
                         $Category->setLevel($level);
 
