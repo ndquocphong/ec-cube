@@ -412,7 +412,6 @@ class CsvImportController
      */
     public function csvCategory(Application $app, Request $request)
     {
-
         $form = $app['form.factory']->createBuilder('admin_csv_import')->getForm();
 
         $headers = $this->getCategoryCsvHeader();
@@ -436,8 +435,13 @@ class CsvImportController
                     }
 
                     $keys = array_keys($headers);
+
+                    /**
+                     * Checking the header for the data column flexible.
+                     */
+                    $compareKey = $keys;
                     $columnHeaders = $data->getColumnHeaders();
-                    if ($keys !== $columnHeaders) {
+                    if ((count($compareKey) != count($columnHeaders)) || (count(array_diff($compareKey, $columnHeaders)) > 0)) {
                         $this->addErrors('CSVのフォーマットが一致しません。');
                         return $this->render($app, $form, $headers, $this->categoryTwig);
                     }
@@ -455,13 +459,12 @@ class CsvImportController
 
                     $this->em->getConnection()->beginTransaction();
 
-                    /** @var $category CategoryRepository*/
+                    /* @var $category CategoryRepository */
                     $category = $app['eccube.repository.category'];
                     $max = $category->createQueryBuilder('c')
                         ->select('Max(c.rank) as rank')->getQuery()->getSingleScalarResult();
                     // CSVファイルの登録処理
                     foreach ($data as $row) {
-
                         if ($headerSize != count($row)) {
                             $this->addErrors(($data->key() + 1) . '行目のCSVフォーマットが一致しません。');
                             return $this->render($app, $form, $headers, $this->categoryTwig);
@@ -483,7 +486,6 @@ class CsvImportController
                                 $this->addErrors(($data->key() + 1) . '行目のカテゴリIDと親カテゴリIDが同じです。');
                                 return $this->render($app, $form, $headers, $this->categoryTwig);
                             }
-
                         }
 
                         // Rank
@@ -507,7 +509,6 @@ class CsvImportController
                         }
 
                         if ($row['親カテゴリID'] != '') {
-
                             if (!preg_match('/^\d+$/', $row['親カテゴリID'])) {
                                 $this->addErrors(($data->key() + 1) . '行目の親カテゴリIDが存在しません。');
                                 return $this->render($app, $form, $headers, $this->categoryTwig);
@@ -519,7 +520,6 @@ class CsvImportController
                                 $this->addErrors(($data->key() + 1) . '行目の親カテゴリIDが存在しません。');
                                 return $this->render($app, $form, $headers, $this->categoryTwig);
                             }
-
                         } else {
                             $ParentCategory = null;
                         }
