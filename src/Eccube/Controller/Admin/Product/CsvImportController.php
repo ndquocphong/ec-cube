@@ -83,8 +83,12 @@ class CsvImportController
                     }
 
                     $keys = array_keys($headers);
+                    /**
+                      * Checking the header for the data column flexible.
+                      */
+                    $compareKey = $keys;
                     $columnHeaders = $data->getColumnHeaders();
-                    if ($keys !== $columnHeaders) {
+                    if ((count($compareKey) != count($columnHeaders)) || (count(array_diff($compareKey, $columnHeaders)) > 0)) {
                         $this->addErrors('CSVのフォーマットが一致しません。');
                         return $this->render($app, $form, $headers, $this->productTwig);
                     }
