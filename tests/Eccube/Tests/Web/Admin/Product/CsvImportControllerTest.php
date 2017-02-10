@@ -403,6 +403,34 @@ class CsvImportControllerTest extends AbstractAdminWebTestCase
     }
 
     /**
+     * Test import product with column csv is miss
+     */
+    public function testImportProductWithMissColumnCheck()
+    {
+        $this->filepath = __DIR__.'/products_column_missing.csv';
+        copy(__DIR__.'/../../../../../Fixtures/products_column_missing.csv', $this->filepath); // 削除されてしまうのでコピーしておく
+
+        $Products = $this->app['eccube.repository.product']->findAll();
+        $this->expected = count($Products);
+
+        // csv missing id column
+        $csv = $this->createCsvAsArray();
+        unset($csv[0][0]);
+        unset($csv[1][0]);
+
+        $this->filepath = $this->createCsvFromArray($csv, 'products_column_missing.csv');
+
+        $crawler = $this->scenario('admin_product_csv_import', 'products_column_missing.csv');
+
+        $Products = $this->app['eccube.repository.product']->findAll();
+
+        $this->actual = count($Products);
+        $this->verify();
+
+        $this->assertRegexp('/CSVのフォーマットが一致しません。/u', $crawler->filter('div#upload_file_box__body')->text());
+    }
+
+    /**
      * Test import product with mixing column csv.
      */
     public function testImportProductWithFlexibleColumn()
