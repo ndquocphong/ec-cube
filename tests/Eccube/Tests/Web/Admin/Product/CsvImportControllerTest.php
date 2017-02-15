@@ -3,6 +3,7 @@
 namespace Eccube\Tests\Web\Admin\Product;
 
 use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
+use Faker\Generator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class CsvImportControllerTest extends AbstractAdminWebTestCase
@@ -531,51 +532,27 @@ class CsvImportControllerTest extends AbstractAdminWebTestCase
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
 
-    /**
-     * Test import product with column csv is miss
-     */
-    public function testImportProductWithMissColumnCheck()
-    {
-        $this->filepath = __DIR__.'/products_column_missing.csv';
-        copy(__DIR__.'/../../../../../Fixtures/products_column_missing.csv', $this->filepath); // 削除されてしまうのでコピーしておく
 
+//======================================================================
+//    CSV import product test
+//======================================================================
+
+    /**
+     * Check the imported products with csv column is missed
+     */
+    public function testImportProductWithColumnIsMissed()
+    {
         $Products = $this->app['eccube.repository.product']->findAll();
-        $this->expected = count($Products);
+        $this->expected = count($Products) + 1;
 
         // csv missing id column
         $csv = $this->createCsvAsArray();
         unset($csv[0][0]);
         unset($csv[1][0]);
 
-        $this->filepath = $this->createCsvFromArray($csv, 'products_column_missing.csv');
+        $this->filepath = $this->createCsvFromArray($csv);
 
-        $crawler = $this->scenario('admin_product_csv_import', 'products_column_missing.csv');
-
-        $Products = $this->app['eccube.repository.product']->findAll();
-
-        $this->actual = count($Products);
-        $this->verify();
-
-        $this->assertRegexp('/CSVのフォーマットが一致しません。/u', $crawler->filter('div#upload_file_box__body')->text());
-    }
-
-    /**
-     * Test import product with mixing column csv.
-     */
-    public function testImportProductWithFlexibleColumn()
-    {
-        $this->filepath = __DIR__.'/products_column_mixed.csv';
-        copy(__DIR__.'/../../../../../Fixtures/products_column_mixed.csv', $this->filepath); // 削除されてしまうのでコピーしておく
-
-        $Products = $this->app['eccube.repository.product']->findAll();
-        $this->expected = count($Products) +1;
-
-        // 1 product
-        $csv = $this->createCsvAsArray();
-
-        $this->filepath = $this->createCsvFromArray($csv, 'products_column_mixed.csv');
-
-        $crawler = $this->scenario('admin_product_csv_import', 'products_column_mixed.csv');
+        $crawler = $this->scenario();
 
         $Products = $this->app['eccube.repository.product']->findAll();
 
@@ -609,6 +586,32 @@ class CsvImportControllerTest extends AbstractAdminWebTestCase
                 $this->verify();
             }
         }
+
+        $this->assertRegexp('/商品登録CSVファイルをアップロードしました。/u', $crawler->filter('div.alert-success')->text());
+    }
+
+    /**
+     * Imported products tested with just the column is required.
+     */
+    public function testImportProductWithColumnIsRequired()
+    {
+        $Products = $this->app['eccube.repository.product']->findAll();
+        $this->expected = count($Products) +1;
+
+        /** @var $faker Generator*/
+        $faker = $this->getFaker();
+        // 1 product
+        $csv[] = array('公開ステータス(ID)', '商品名', '商品種別(ID)', '在庫数無制限フラグ', '販売価格');
+        $csv[] = array(1,  "商品名".$faker->word."商品名", 1, 1, $faker->randomNumber(5));
+
+        $this->filepath = $this->createCsvFromArray($csv);
+
+        $crawler = $this->scenario();
+
+        $Products = $this->app['eccube.repository.product']->findAll();
+
+        $this->actual = count($Products);
+        $this->verify();
 
         $this->assertRegexp('/商品登録CSVファイルをアップロードしました。/u', $crawler->filter('div.alert-success')->text());
     }
