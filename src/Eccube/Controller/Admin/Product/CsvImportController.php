@@ -24,6 +24,7 @@
 
 namespace Eccube\Controller\Admin\Product;
 
+use Doctrine\ORM\EntityManager;
 use Eccube\Application;
 use Eccube\Common\Constant;
 use Eccube\Entity\Category;
@@ -50,6 +51,7 @@ class CsvImportController
 
     private $fileName;
 
+    /** @var  EntityManager */
     private $em;
 
     private $productTwig = 'Product/csv_product.twig';
@@ -828,7 +830,7 @@ class CsvImportController
             if ($row['在庫数無制限フラグ'] == (string) Constant::DISABLED) {
                 $ProductClass->setStockUnlimited(Constant::DISABLED);
                 // 在庫数が設定されていなければエラー
-                if ($row['在庫数'] == '') {
+                if (isset($row['在庫数']) && Str::isBlank($row['在庫数'])) {
                     $this->addErrors(($data->key() + 1) . '行目の在庫数が設定されていません。');
                 } else {
                     $stock = str_replace(',', '', $row['在庫数']);
@@ -986,7 +988,7 @@ class CsvImportController
             if ($row['在庫数無制限フラグ'] == (string) Constant::DISABLED) {
                 $ProductClass->setStockUnlimited(Constant::DISABLED);
                 // 在庫数が設定されていなければエラー
-                if ($row['在庫数'] == '') {
+                if (isset($row['在庫数']) && Str::isBlank($row['在庫数'])) {
                     $this->addErrors(($data->key() + 1) . '行目の在庫数が設定されていません。');
                 } else {
                     $stock = str_replace(',', '', $row['在庫数']);
