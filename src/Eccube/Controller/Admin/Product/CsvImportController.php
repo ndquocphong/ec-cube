@@ -124,7 +124,9 @@ class CsvImportController
                         if ($row['公開ステータス(ID)'] == '') {
                             $this->addErrors(($data->key() + 1) . '行目の公開ステータス(ID)が設定されていません。');
                         } else {
-                            if (preg_match('/^\d+$/', $row['公開ステータス(ID)'])) {
+                            // max of pgsql smallint
+                            $maxSmallInt = pow(2, 15);
+                            if (preg_match('/^\d+$/', $row['公開ステータス(ID)']) && $row['公開ステータス(ID)'] < $maxSmallInt) {
                                 $Disp = $app['eccube.repository.master.disp']->find($row['公開ステータス(ID)']);
                                 if (!$Disp) {
                                     $this->addErrors(($data->key() + 1) . '行目の公開ステータス(ID)が存在しません。');

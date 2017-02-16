@@ -687,7 +687,7 @@ class CsvImportControllerTest extends AbstractAdminWebTestCase
     public function dataStatusProvider()
     {
         return array(
-            array(99999, '2行目の公開ステータス\(ID\)が存在しません'),
+            array(99, '2行目の公開ステータス\(ID\)が存在しません'),
             array('abc', '2行目の公開ステータス\(ID\)が存在しません'),
             array('', '2行目の公開ステータス\(ID\)が設定されていません'),
         );
