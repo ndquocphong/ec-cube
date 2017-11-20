@@ -204,7 +204,7 @@ class ComposerApiService implements ComposerServiceInterface
     private function init()
     {
         set_time_limit(0);
-        @ini_set('memory_limit', '1536M');
+//        @ini_set('memory_limit', '1536M');
         // Config for some environment
         putenv('COMPOSER_HOME='.$this->appConfig['plugin_realdir'].'/.composer');
         $consoleApplication = new Application();
