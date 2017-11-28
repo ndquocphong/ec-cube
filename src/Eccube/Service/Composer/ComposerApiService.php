@@ -77,7 +77,7 @@ class ComposerApiService implements ComposerServiceInterface
     public function execRequire($packageName)
     {
         $packageName = explode(" ", trim($packageName));
-        $output = $this->runCommand(array(
+        $this->runCommand(array(
             'command' => 'require',
             'packages' => $packageName,
             '--no-interaction' => true,
@@ -86,7 +86,7 @@ class ComposerApiService implements ComposerServiceInterface
             '--ignore-platform-reqs' => true,
         ));
 
-        return OutputParser::parseRequire($output);
+        return true;
     }
 
     /**

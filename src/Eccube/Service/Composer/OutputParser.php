@@ -34,31 +34,6 @@ class OutputParser
      * @param string $output
      * @return array
      */
-    public static function parseRequire($output)
-    {
-        $rowArray = explode(PHP_EOL, str_replace('\r\n', PHP_EOL, $output));
-        $installedLogs = array_filter(
-            array_map(
-                function ($line) {
-                    $matches = array();
-                    preg_match('/^  - Installing (.*?) \((.*?)\) .*/', $line, $matches);
-
-                    return $matches;
-                },
-                $rowArray
-            )
-        );
-
-        // 'package name' => 'version'
-        return array('installed' => array_column($installedLogs, 2, 1));
-    }
-
-    /**
-     * Parse to array
-     *
-     * @param string $output
-     * @return array
-     */
     public static function parseInfo($output)
     {
         $rowArray = explode(PHP_EOL, str_replace('\r\n', PHP_EOL, $output));

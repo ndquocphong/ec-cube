@@ -24,6 +24,7 @@ namespace Eccube\Service\Composer;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Eccube\Annotation\Service;
+use Zend\Code\Exception\RuntimeException;
 
 /**
  * Class ComposerProcessService
@@ -117,8 +118,13 @@ class ComposerProcessService implements ComposerServiceInterface
     {
         // Execute command
         $output = array();
-        exec($command, $output);
-        log_info(PHP_EOL.implode(PHP_EOL, $output).PHP_EOL);
+        try {
+            exec($command, $output);
+            log_info(PHP_EOL . implode(PHP_EOL, $output) . PHP_EOL);
+        } catch (\Exception $exception) {
+            throw new RuntimeException($exception->getMessage());
+        }
+
     }
 
     /**
