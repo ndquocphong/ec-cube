@@ -111,6 +111,7 @@ class ComposerProcessService implements ComposerServiceInterface
      * Run command
      * @throws \RuntimeException
      * @param string $command
+     * @return void
      */
     public function runCommand($command)
     {
