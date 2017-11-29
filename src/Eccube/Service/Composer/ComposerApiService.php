@@ -72,7 +72,7 @@ class ComposerApiService implements ComposerServiceInterface
      * Run execute command
      *
      * @param string $packageName format "foo/bar foo/bar:1.0.0"
-     * @return array
+     * @return bool
      */
     public function execRequire($packageName)
     {
