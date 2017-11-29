@@ -109,9 +109,8 @@ class ComposerProcessService implements ComposerServiceInterface
 
     /**
      * Run command
-     *
+     * @throws \RuntimeException
      * @param string $command
-     * @return void
      */
     public function runCommand($command)
     {
@@ -119,7 +118,16 @@ class ComposerProcessService implements ComposerServiceInterface
         try {
             // Execute command
             exec($command, $output);
-            log_info(PHP_EOL . implode(PHP_EOL, $output) . PHP_EOL);
+            if (empty($output)) {
+                throw new \RuntimeException('Error when run php "exec" command line.');
+            }
+
+            $outputString = implode(PHP_EOL, $output);
+            if (strpos($outputString, 'Exception') !== false) {
+                throw new \RuntimeException($outputString);
+            }
+
+            log_info(PHP_EOL . $outputString . PHP_EOL);
         } catch (\Exception $exception) {
             throw new \RuntimeException($exception->getMessage());
         }
