@@ -24,7 +24,6 @@
 
 namespace Eccube\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Eccube\Entity\BaseInfo;
 use Eccube\Entity\CustomerAddress;
 use Eccube\Entity\Master\CustomerStatus;
@@ -37,8 +36,6 @@ use Eccube\Repository\Master\CustomerStatusRepository;
 use Eccube\Service\MailService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception as HttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -73,21 +70,6 @@ class EntryController extends AbstractController
     protected $BaseInfo;
 
     /**
-     * @var EntityManagerInterface
-     */
-    protected $entityManager;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    protected $eventDispatcher;
-
-    /**
-     * @var FormFactoryInterface
-     */
-    protected $formFactory;
-
-    /**
      * @var CustomerRepository
      */
     protected $customerRepository;
@@ -102,9 +84,6 @@ class EntryController extends AbstractController
      * @param CustomerStatusRepository $customerStatusRepository
      * @param MailService $mailService
      * @param BaseInfoRepository $BaseInfo
-     * @param EntityManagerInterface $entityManager
-     * @param EventDispatcherInterface $eventDispatcher
-     * @param FormFactoryInterface $formFactory
      * @param CustomerRepository $customerRepository
      * @param EncoderFactoryInterface $encoderFactory
      * @param ValidatorInterface $validatorInterface
@@ -114,9 +93,6 @@ class EntryController extends AbstractController
         CustomerStatusRepository $customerStatusRepository,
         MailService $mailService,
         BaseInfoRepository $BaseInfo,
-        EntityManagerInterface $entityManager,
-        EventDispatcherInterface $eventDispatcher,
-        FormFactoryInterface $formFactory,
         CustomerRepository $customerRepository,
         EncoderFactoryInterface $encoderFactory,
         ValidatorInterface $validatorInterface,
@@ -125,9 +101,6 @@ class EntryController extends AbstractController
         $this->customerStatusRepository = $customerStatusRepository;
         $this->mailService = $mailService;
         $this->BaseInfo = $BaseInfo->get();
-        $this->entityManager = $entityManager;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->formFactory = $formFactory;
         $this->customerRepository = $customerRepository;
         $this->encoderFactory = $encoderFactory;
         $this->recursiveValidator = $validatorInterface;

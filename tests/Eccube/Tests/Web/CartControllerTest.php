@@ -37,7 +37,7 @@ class CartControllerTest extends AbstractWebTestCase
     public function testRoutingCartUp()
     {
         $this->client->request('PUT', '/cart/up/1',
-            [Constant::TOKEN_NAME => $this->getCsrfToken(Constant::TOKEN_NAME)->getValue()]
+            [Constant::TOKEN_NAME => 'dummy']
         );
         $this->assertTrue($this->client->getResponse()->isRedirection());
     }
