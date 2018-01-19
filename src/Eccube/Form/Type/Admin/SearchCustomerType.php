@@ -49,16 +49,26 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SearchCustomerType extends AbstractType
 {
     /**
-     * @Inject("config")
      * @var array
      */
     protected $appConfig;
 
     /**
-     * @Inject(CustomerStatusRepository::class)
      * @var CustomerStatusRepository
      */
     protected $customerStatusRepository;
+
+    /**
+     * SearchCustomerType constructor.
+     * @param array $eccubeConfig
+     * @param CustomerStatusRepository $customerStatusRepository
+     */
+    public function __construct(array $eccubeConfig, CustomerStatusRepository $customerStatusRepository)
+    {
+        $this->appConfig = $eccubeConfig;
+        $this->customerStatusRepository = $customerStatusRepository;
+    }
+
 
     /**
      * {@inheritdoc}

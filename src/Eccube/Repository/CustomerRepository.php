@@ -25,6 +25,7 @@
 namespace Eccube\Repository;
 
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Eccube\Annotation\Inject;
 use Eccube\Annotation\Repository;
 use Eccube\Doctrine\Query\Queries;
@@ -34,6 +35,7 @@ use Eccube\Entity\Master\OrderStatus;
 use Eccube\Util\StringUtil;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use Symfony\Component\Security\Core\Encoder\EncoderFactory;
+use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -50,37 +52,45 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 class CustomerRepository extends AbstractRepository
 {
     /**
-     * @Inject("eccube.queries")
      * @var Queries
      */
     protected $queries;
 
     /**
-     * @Inject("orm.em")
-     * @var EntityManager
+     * @var EntityManagerInterface
      */
     protected $entityManager;
 
     /**
-     * @Inject(OrderRepository::class)
      * @var OrderRepository
      */
     protected $orderRepository;
 
-    /**
-     * @Inject("config")
-     * @var array
-     */
-    protected $appConfig;
 
     /**
-     * @Inject("security.encoder_factory")
-     * @var EncoderFactory
+     * @var EncoderFactoryInterface
      */
     protected $encoderFactory;
 
-    public function __construct(RegistryInterface $registry)
+    /**
+     * CustomerRepository constructor.
+     * @param Queries $queries
+     * @param EntityManagerInterface $entityManager
+     * @param OrderRepository $orderRepository
+     * @param EncoderFactoryInterface $encoderFactory
+     * @param RegistryInterface $registry
+     */
+    public function __construct(
+        Queries $queries,
+        EntityManagerInterface $entityManager,
+        OrderRepository $orderRepository,
+        EncoderFactoryInterface $encoderFactory,
+        RegistryInterface $registry)
     {
+        $this->queries = $queries;
+        $this->entityManager = $entityManager;
+        $this->orderRepository = $orderRepository;
+        $this->encoderFactory = $encoderFactory;
         parent::__construct($registry, Customer::class);
     }
 

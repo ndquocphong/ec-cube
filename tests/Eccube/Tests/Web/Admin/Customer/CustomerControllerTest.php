@@ -3,6 +3,9 @@
 namespace Eccube\Tests\Web\Admin\Customer;
 
 use Eccube\Entity\Master\CsvType;
+use Eccube\Repository\BaseInfoRepository;
+use Eccube\Repository\CustomerRepository;
+use Eccube\Repository\Master\CsvTypeRepository;
 use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
 
 /**
@@ -11,36 +14,34 @@ use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
  */
 class CustomerControllerTest extends AbstractAdminWebTestCase
 {
+    /** @var  CustomerRepository */
+    protected $customerRepository;
+
+    /** @var  BaseInfoRepository */
+    protected $baseInfoRepository;
+
     /**
      * Setup
      */
     public function setUp()
     {
-        $this->markTestIncomplete(get_class($this).' は未実装です');
         parent::setUp();
-        $this->initializeMailCatcher();
         for ($i = 0; $i < 10; $i++) {
             $this->createCustomer('user-'.$i.'@example.com');
         }
         // sqlite では CsvType が生成されないので、ここで作る
-        $CsvType = $this->app['eccube.repository.master.csv_type']->find(2);
+        $CsvType = $this->container->get(CsvTypeRepository::class)->find(2);
+
         if (!is_object($CsvType)) {
             $CsvType = new CsvType();
             $CsvType->setId(2);
             $CsvType->setName('会員CSV');
             $CsvType->setSortNo(4);
-            $this->app['orm.em']->persist($CsvType);
-            $this->app['orm.em']->flush();
+            $this->entityManager->persist($CsvType);
+            $this->entityManager->flush();
         }
-    }
-
-    /**
-     * tearDown
-     */
-    public function tearDown()
-    {
-        $this->cleanUpMailCatcherMessages();
-        parent::tearDown();
+        $this->customerRepository = $this->container->get(CustomerRepository::class);
+        $this->baseInfoRepository = $this->container->get(BaseInfoRepository::class);
     }
 
     /**
@@ -50,7 +51,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
     {
         $this->client->request(
             'GET',
-            $this->app->path('admin_customer')
+            $this->generateUrl('admin_customer')
         );
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
@@ -66,7 +67,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
 
         $this->client->request(
             'GET',
-            $this->app->path('admin_customer_page', array('page_no' => 2))
+            $this->generateUrl('admin_customer_page', array('page_no' => 2))
         );
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
@@ -78,7 +79,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
     {
         $crawler = $this->client->request(
             'POST',
-            $this->app->path('admin_customer'),
+            $this->generateUrl('admin_customer'),
             array('admin_search_customer' => array('_token' => 'dummy'))
         );
         $this->assertTrue($this->client->getResponse()->isSuccessful());
@@ -95,7 +96,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
     {
         $crawler = $this->client->request(
             'POST',
-            $this->app->path('admin_customer'),
+            $this->generateUrl('admin_customer'),
             array('admin_search_customer' => array('_token' => 'dummy', 'sex' => 2))
         );
         $this->expected = '検索';
@@ -109,7 +110,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
     public function testIndexWithPostSearchByEmail()
     {
         $crawler = $this->client->request(
-            'POST', $this->app->path('admin_customer'), array('admin_search_customer' => array('_token' => 'dummy', 'multi' => 'ser-7'))
+            'POST', $this->generateUrl('admin_customer'), array('admin_search_customer' => array('_token' => 'dummy', 'multi' => 'ser-7'))
         );
         $this->assertTrue($this->client->getResponse()->isSuccessful());
 
@@ -123,10 +124,10 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
      */
     public function testIndexWithPostSearchById()
     {
-        $Customer = $this->app['eccube.repository.customer']->findOneBy([], array('id' => 'DESC'));
+        $Customer = $this->customerRepository->findOneBy([], array('id' => 'DESC'));
 
         $crawler = $this->client->request(
-            'POST', $this->app->path('admin_customer'), array('admin_search_customer' => array('_token' => 'dummy', 'multi' => $Customer->getId()))
+            'POST', $this->generateUrl('admin_customer'), array('admin_search_customer' => array('_token' => 'dummy', 'multi' => $Customer->getId()))
         );
         $this->assertTrue($this->client->getResponse()->isSuccessful());
 
@@ -143,16 +144,19 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
         $Customer = $this->createCustomer();
         $this->client->request(
             'PUT',
-            $this->app->path('admin_customer_resend', array('id' => $Customer->getId()))
+            $this->generateUrl('admin_customer_resend', array('id' => $Customer->getId()))
         );
-        $this->assertTrue($this->client->getResponse()->isRedirect($this->app->url('admin_customer')));
+        $this->assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('admin_customer')));
 
-        $Messages = $this->getMailCatcherMessages();
-        $Message = $this->getMailCatcherMessage($Messages[0]->id);
+        $mailCollector = $this->getMailCollector(false);
 
-        $BaseInfo = $this->app['eccube.repository.base_info']->get();
+        $Messages = $mailCollector->getMessages();
+        /** @var \Swift_Message $Message */
+        $Message = $Messages[0];
+
+        $BaseInfo = $this->baseInfoRepository->get();
         $this->expected = '['.$BaseInfo->getShopName().'] 会員登録のご確認';
-        $this->actual = $Message->subject;
+        $this->actual = $Message->getSubject();
         $this->verify();
 
         //test mail resend to 仮会員.
@@ -168,11 +172,11 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
         $id = $Customer->getId();
         $this->client->request(
             'DELETE',
-            $this->app->path('admin_customer_delete', array('id' => $Customer->getId()))
+            $this->generateUrl('admin_customer_delete', array('id' => $Customer->getId()))
         );
-        $this->assertTrue($this->client->getResponse()->isRedirect($this->app->url('admin_customer_page', array('page_no' => 1)).'?resume=1'));
+        $this->assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('admin_customer_page', array('page_no' => 1)).'?resume=1'));
 
-        $DeletedCustomer = $this->app['eccube.repository.customer']->find($id);
+        $DeletedCustomer = $this->customerRepository->find($id);
 
         $this->assertNull($DeletedCustomer);
     }
@@ -182,11 +186,11 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
      */
     public function testExport()
     {
-        $this->expectOutputRegex('/user-[0-9]@example.com/', 'user-[0-9]@example.com が含まれる CSV が出力されるか');
+        $this->expectOutputRegex('/user-[0-9]@example.com/');
 
         $this->client->request(
             'POST',
-            $this->app->path('admin_customer_export'),
+            $this->generateUrl('admin_customer_export'),
             array('admin_search_customer' => array('_token' => 'dummy'))
         );
     }
