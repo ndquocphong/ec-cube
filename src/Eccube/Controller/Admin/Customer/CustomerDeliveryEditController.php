@@ -47,42 +47,29 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class CustomerDeliveryEditController extends AbstractController
 {
-    /**
-     * @Inject("eccube.event.dispatcher")
-     * @var EventDispatcher
-     */
-    protected $eventDispatcher;
     
     /**
-     * @Inject("form.factory")
-     * @var FormFactory
-     */
-    protected $formFactory;
-    
-    /**
-     * @Inject("config")
-     * @var array
-     */
-    protected $appConfig;
-    
-    /**
-     * @Inject("orm.em")
-     * @var EntityManager
-     */
-    protected $entityManager;
-    
-    /**
-     * @Inject(CustomerRepository::class)
      * @var CustomerRepository
      */
     protected $customerRepository;
     
     /**
-     * @Inject(CustomerAddressRepository::class)
      * @var CustomerAddressRepository
      */
     protected $customerAddressRepository;
-    
+
+    /**
+     * CustomerDeliveryEditController constructor.
+     * @param CustomerRepository $customerRepository
+     * @param CustomerAddressRepository $customerAddressRepository
+     */
+    public function __construct(CustomerRepository $customerRepository, CustomerAddressRepository $customerAddressRepository)
+    {
+        $this->customerRepository = $customerRepository;
+        $this->customerAddressRepository = $customerAddressRepository;
+    }
+
+
     /**
      * お届け先編集画面.
      *
@@ -90,13 +77,13 @@ class CustomerDeliveryEditController extends AbstractController
      * @Route("/%admin_route%/customer/{id}/delivery/{did}/edit", name="admin_customer_delivery_edit", requirements={"id" = "\d+", "did" = "\d+"})
      * @Template("Customer/delivery_edit.twig")
      */
-    public function edit(Application $app, Request $request, Customer $Customer, $did = null)
+    public function edit(Request $request, Customer $Customer, $did = null)
     {   
         // 配送先住所最大値判定
         // $idが存在する際は、追加処理ではなく、編集の処理ため本ロジックスキップ
         if (is_null($did)) {
             $addressCurrNum = count($Customer->getCustomerAddresses());
-            $addressMax = $this->appConfig['deliv_addr_max'];
+            $addressMax = $this->eccubeConfig['deliv_addr_max'];
             if ($addressCurrNum >= $addressMax) {
                 throw new NotFoundHttpException('お届け先の登録数の上限を超えています');
             }
@@ -145,14 +132,14 @@ class CustomerDeliveryEditController extends AbstractController
                     );
                 $this->eventDispatcher->dispatch(EccubeEvents::ADMIN_CUSTOMER_DELIVERY_EDIT_INDEX_COMPLETE, $event);
                 
-                $app->addSuccess('admin.customer.delivery.save.complete', 'admin');
+                $this->addSuccess('admin.customer.delivery.save.complete', 'admin');
                 
-                return $app->redirect($app->url('admin_customer_delivery_edit', array(
+                return $this->redirectToRoute('admin_customer_delivery_edit', array(
                     'id' => $Customer->getId(),
                     'did' => $CustomerAddress->getId(),
-                )));
+                ));
             } else {
-                $app->addError('admin.customer.delivery.save.failed', 'admin');
+                $this->addError('admin.customer.delivery.save.failed', 'admin');
             }
         }
         
@@ -168,9 +155,9 @@ class CustomerDeliveryEditController extends AbstractController
      * @Method("DELETE")
      * @Route("/%admin_route%/customer/{id}/delivery/{did}/delete", requirements={"id" = "\d+", "did" = "\d+"}, name="admin_customer_delivery_delete")
      */
-    public function delete(Application $app, Request $request, Customer $Customer, $did)
+    public function delete(Request $request, Customer $Customer, $did)
     {
-        $this->isTokenValid($app);
+        $this->isTokenValid();
     
         log_info('お届け先削除開始', array($did));
         
@@ -178,18 +165,18 @@ class CustomerDeliveryEditController extends AbstractController
         if (is_null($CustomerAddress)) {
             throw new NotFoundHttpException();
         } else if ($CustomerAddress->getCustomer()->getId() != $Customer->getId()) {
-            $app->deleteMessage();
-            return $app->redirect($app->url('admin_customer_edit', array('id' => $Customer->getId())));
+            $this->deleteMessage();
+            return $this->redirectToRoute('admin_customer_edit', array('id' => $Customer->getId()));
         }
     
         try {
             $this->customerAddressRepository->delete($CustomerAddress);
-            $app->addSuccess('admin.customer.delivery.delete.complete', 'admin');
+            $this->addSuccess('admin.customer.delivery.delete.complete', 'admin');
         } catch (ForeignKeyConstraintViolationException $e) {
             log_error('お届け先削除失敗', [$e], 'admin');
     
-            $message = $app->trans('admin.delete.failed.foreign_key', ['%name%' => 'お届け先']);
-            $app->addError($message, 'admin');
+            $message = $this->translator->trans('admin.delete.failed.foreign_key', ['%name%' => 'お届け先']);
+            $this->addError($message, 'admin');
         }
     
         log_info('お届け先削除完了', array($did));
@@ -203,7 +190,7 @@ class CustomerDeliveryEditController extends AbstractController
         );
         $this->eventDispatcher->dispatch(EccubeEvents::ADMIN_CUSTOMER_DELIVERY_DELETE_COMPLETE, $event);
     
-        return $app->redirect($app->url('admin_customer_edit', array('id' => $Customer->getId())));
+        return $this->redirectToRoute('admin_customer_edit', array('id' => $Customer->getId()));
     }
     
 }

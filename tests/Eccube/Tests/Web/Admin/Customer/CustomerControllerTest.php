@@ -26,6 +26,7 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
     public function setUp()
     {
         parent::setUp();
+        $this->client->enableProfiler();
         for ($i = 0; $i < 10; $i++) {
             $this->createCustomer('user-'.$i.'@example.com');
         }
@@ -158,9 +159,8 @@ class CustomerControllerTest extends AbstractAdminWebTestCase
         $this->expected = '['.$BaseInfo->getShopName().'] 会員登録のご確認';
         $this->actual = $Message->getSubject();
         $this->verify();
-
         //test mail resend to 仮会員.
-        $this->assertContains($BaseInfo->getEmail02(), $Message->source);
+        $this->assertContains($BaseInfo->getEmail02(), $Message->getBody());
     }
 
     /**
