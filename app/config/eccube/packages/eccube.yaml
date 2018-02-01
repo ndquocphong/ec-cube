@@ -72,3 +72,4 @@ parameters:
     force_ssl: 0
     block_default_realdir: '%kernel.project_dir%/src/Eccube/Resource/template/default/Block'
     block_realdir: '%kernel.project_dir%/app/template/default/Block'
+    order_new: 1
