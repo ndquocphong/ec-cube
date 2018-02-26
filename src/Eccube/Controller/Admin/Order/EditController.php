@@ -551,7 +551,7 @@ class EditController extends AbstractController
 
     /**
      * @Route("/%eccube_admin_route%/order/search/product", name="admin_order_search_product")
-     * @Route("/%eccube_admin_route%/order/search/product/page/{page_no}", requirements={"page_no" = "\d+"}, name="admin_order_search_product_page")
+     * @Route("/%eccube_admin_route%/order/search/product/page/{page_no}", requirements={"page_no" = "\d+"}, name="admin_order_search_product_page", defaults={"page_no": "1"})
      * @Template("@admin/Order/search_product.twig")
      */
     public function searchProduct(Request $request, $page_no = null, Paginator $paginator)

@@ -90,7 +90,7 @@ $(function() {
 
         var data = $(this).data();
         shipment_idx = data.idx;
-        
+
         orderItem_idx = 0;
         /*
         for(i = 0; i < shipping_details_count.length; i++) { 
@@ -99,15 +99,24 @@ $(function() {
             }
         }
         */
-        
+        var searchForm = {
+            'id': $('#admin_search_product_id').val(),
+            'category_id': $('#admin_search_product_category_id').val()
+        };
+        searchProduct('{{ url('admin_order_search_product_page') }}', 'POST', searchForm);
+    });
+
+    $('#searchProductModalList').on('click', 'ul.ec-pager li a', function (e) {
+        searchProduct($(this).attr('href'), 'GET', {});
+        e.preventDefault();
+    });
+
+    function searchProduct(_url, _type, _data) {
         $.ajax({
-            type: 'POST',
+            type: _type,
             dataType: 'html',
-            data: {
-                'id' : $('#admin_search_product_id').val(),
-                'category_id' : $('#admin_search_product_category_id').val()
-            },
-            url: '{{ url('admin_order_search_product') }}',
+            data: _data,
+            url: _url,
             success: function(data) {
                 // モーダルに結果を書き出し.
                 $('#searchProductModalList').html(data);
@@ -116,7 +125,7 @@ $(function() {
                 alert('search product failed.');
             }
         });
-    });
+    }
 
     // 受注明細行の行数カウンタ.
     // 受注登録・編集画面上でグローバルな変数.
@@ -222,7 +231,7 @@ var setModeAndSubmit = function(mode, keyname, keyid) {
                                     <h4>{{'admin.order.edit.245'|trans}}</h4>
                                     {% for Shipping in Order.Shippings  %}
                                         <div class="form-group">
-                                            {{'admin.order.edit.246'|trans}}: <span class="number"><a href="{{ url('admin/shipping/edit', { id : Shipping.id }) }}" }}">{{ Shipping.id }}</a></span><br>
+                                            {{'admin.order.edit.246'|trans}}: <span class="number"><a href="{{ url('admin_shipping_edit', { id : Shipping.id }) }}" }}">{{ Shipping.id }}</a></span><br>
                                             {{ Shipping.Name01 }} {{ Shipping.Name02 }} ({{ Shipping.Kana01 }} {{ Shipping.Kana02 }})<br>
                                             〒{{ Shipping.Zip01 }}-{{ Shipping.Zip02 }}<br>
                                             {{ Shipping.Pref }}{{ Shipping.Addr01 }}{{ Shipping.Addr02 }}

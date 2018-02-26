@@ -5,7 +5,7 @@
             <li class="ec-pager__item">
                 <a href="{{ path(
                 app.request.attributes.get('_route'),
-                app.request.query.all|merge({'pageno': pages.first})) }}">{{'common.label.pager.first'|trans}}</a></li>
+                app.request.query.all|merge({'page_no': pages.first})) }}">{{'common.label.pager.first'|trans}}</a></li>
 
         {% endif %}
 
@@ -14,7 +14,7 @@
             <li class="ec-pager__item">
                 <a href="{{ path(
                 app.request.attributes.get('_route'),
-                app.request.query.all|merge({'pageno': pages.previous})) }}">{{'common.label.pager.prev'|trans}}</a></li>
+                app.request.query.all|merge({'page_no': pages.previous})) }}">{{'common.label.pager.prev'|trans}}</a></li>
         {% endif %}
 
         {# 1ページリンクが表示されない場合、「...」を表示 #}
@@ -26,11 +26,11 @@
             {% if page == pages.current %}
                 <li class="ec-pager__item--active"><a href="{{ path(
                     app.request.attributes.get('_route'),
-                    app.request.query.all|merge({'pageno': page})) }}"> {{ page }} </a></li>
+                    app.request.query.all|merge({'page_no': page})) }}"> {{ page }} </a></li>
             {% else %}
                 <li class="ec-pager__item"><a href="{{ path(
                     app.request.attributes.get('_route'),
-                    app.request.query.all|merge({'pageno': page})) }}"> {{ page }} </a></li>
+                    app.request.query.all|merge({'page_no': page})) }}"> {{ page }} </a></li>
             {% endif %}
         {% endfor %}
 
@@ -44,7 +44,7 @@
             <li class="ec-pager__item">
                 <a href="{{ path(
                 app.request.attributes.get('_route'),
-                app.request.query.all|merge({'pageno': pages.next})) }}">{{'common.label.pager.next'|trans}}</a></li>
+                app.request.query.all|merge({'page_no': pages.next})) }}">{{'common.label.pager.next'|trans}}</a></li>
         {% endif %}
 
         {# 最後へ #}
@@ -52,7 +52,7 @@
             <li class="ec-pager__item">
                 <a href="{{ path(
                 app.request.attributes.get('_route'),
-                app.request.query.all|merge({'pageno': pages.last})) }}">{{'common.label.pager.last'|trans}}</a></li>
+                app.request.query.all|merge({'page_no': pages.last})) }}">{{'common.label.pager.last'|trans}}</a></li>
         {% endif %}
     </ul>
 {% endif %}
