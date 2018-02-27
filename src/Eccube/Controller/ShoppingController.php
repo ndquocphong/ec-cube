@@ -30,6 +30,8 @@ use Eccube\Entity\Customer;
 use Eccube\Entity\CustomerAddress;
 use Eccube\Entity\Master\OrderStatus;
 use Eccube\Entity\Order;
+use Eccube\Entity\OrderItem;
+use Eccube\Entity\Payment;
 use Eccube\Event\EccubeEvents;
 use Eccube\Event\EventArgs;
 use Eccube\Exception\CartException;
@@ -38,20 +40,23 @@ use Eccube\Form\Type\Front\CustomerLoginType;
 use Eccube\Form\Type\Front\ShoppingShippingType;
 use Eccube\Form\Type\Shopping\OrderType;
 use Eccube\Repository\CustomerAddressRepository;
+use Eccube\Repository\DeliveryRepository;
+use Eccube\Repository\PaymentRepository;
 use Eccube\Service\CartService;
 use Eccube\Service\OrderHelper;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
-use Eccube\Service\PurchaseFlow\PurchaseFlow;
 use Eccube\Service\ShoppingService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * @Route(service=ShoppingController::class)
@@ -89,6 +94,16 @@ class ShoppingController extends AbstractShoppingController
     protected $parameterBag;
 
     /**
+     * @var PaymentRepository
+     */
+    protected $paymentRepository;
+
+    /**
+     * @var DeliveryRepository
+     */
+    protected $deliveryRepository;
+
+    /**
      * ShoppingController constructor.
      * @param BaseInfo $BaseInfo
      * @param OrderHelper $orderHelper
@@ -96,21 +111,19 @@ class ShoppingController extends AbstractShoppingController
      * @param ShoppingService $shoppingService
      * @param CustomerAddressRepository $customerAddressRepository
      * @param ParameterBag $parameterBag
+     * @param PaymentRepository $paymentRepository
+     * @param DeliveryRepository $deliveryRepository
      */
-    public function __construct(
-        BaseInfo $BaseInfo,
-        OrderHelper $orderHelper,
-        CartService $cartService,
-        ShoppingService $shoppingService,
-        CustomerAddressRepository $customerAddressRepository,
-        ParameterBag $parameterBag
-    ) {
+    public function __construct(BaseInfo $BaseInfo, OrderHelper $orderHelper, CartService $cartService, ShoppingService $shoppingService, CustomerAddressRepository $customerAddressRepository, ParameterBag $parameterBag, PaymentRepository $paymentRepository, DeliveryRepository $deliveryRepository)
+    {
         $this->BaseInfo = $BaseInfo;
         $this->orderHelper = $orderHelper;
         $this->cartService = $cartService;
         $this->shoppingService = $shoppingService;
         $this->customerAddressRepository = $customerAddressRepository;
         $this->parameterBag = $parameterBag;
+        $this->paymentRepository = $paymentRepository;
+        $this->deliveryRepository = $deliveryRepository;
     }
 
     /**
@@ -712,6 +725,7 @@ class ShoppingController extends AbstractShoppingController
       */
      public function createShoppingForm(Request $request)
      {
+         /** @var Order $Order */
          $Order = $this->parameterBag->get('Order');
          // フォームの生成
          $builder = $this->formFactory->createBuilder(OrderType::class, $Order);
@@ -726,6 +740,54 @@ class ShoppingController extends AbstractShoppingController
          $this->eventDispatcher->dispatch(EccubeEvents::FRONT_SHOPPING_INDEX_INITIALIZE, $event);
 
          $form = $builder->getForm();
+
+         // 受注明細に含まれる販売種別を抽出.
+         $SaleTypes = array_reduce($Order->getOrderItems()->toArray(), function($results, $OrderItem) {
+             /* @var OrderItem $OrderItem */
+             $ProductClass = $OrderItem->getProductClass();
+             if (!is_null($ProductClass)) {
+                 $SaleType = $ProductClass->getSaleType();
+                 $results[$SaleType->getId()] = $SaleType;
+             }
+             return $results;
+         }, []);
+
+         // 販売種別に紐づく配送業者を抽出
+         $Deliveries = $this->deliveryRepository->getDeliveries($SaleTypes);
+         // 利用可能な支払い方法を抽出.
+         $Payments = $this->paymentRepository->findAllowedPayments($Deliveries, true);
+         $Payments = $this->paymentRepository->getPaymentAllowedCondition($Order, $Payments);
+
+         $form->add(
+             'Payment',
+             EntityType::class,
+             [
+                 'class' => 'Eccube\Entity\Payment',
+                 'choice_label' => function(Payment $Payment) {
+                     return $Payment->getMethod();
+                 },
+                 'expanded' => true,
+                 'multiple' => false,
+                 'placeholder' => null,
+                 'constraints' => [
+                     new NotBlank(),
+                 ],
+                 'choices' => $Payments,
+             ]
+         );
+
+         // Set default payment
+         $Payment = current($Payments);
+         if ($Payment) {
+             if (!$form['Payment']->isValid() || !$Order->getPayment()) {
+                 $Order->setPayment($Payment);
+                 $Order->setPaymentMethod($Payment->getMethod());
+                 $this->entityManager->persist($Order);
+                 $this->entityManager->flush();
+                 $this->entityManager->refresh($Order);
+                 $this->parameterBag->set('Order', $Order);
+             }
+         }
 
          $this->parameterBag->set(OrderType::class, $form);
 

@@ -25,6 +25,7 @@
 namespace Eccube\Repository;
 
 use Doctrine\ORM\Query;
+use Eccube\Entity\Order;
 use Eccube\Entity\Payment;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
@@ -150,4 +151,34 @@ class PaymentRepository extends AbstractRepository
         }
         return $payments;
     }
+
+    /**
+     * Check payment condition
+     * @param Order $Order
+     * @param $Payments
+     * @return Payment[]
+     */
+    public function getPaymentAllowedCondition(Order $Order, array $Payments)
+    {
+        $totalPayment = $Order->getPaymentTotal();
+        if ($totalPayment == 0) {
+            return $Payments;
+        }
+        // Check rule max, min
+        $Payments = array_filter($Payments, function (Payment $payment) use ($totalPayment) {
+            if (!$payment->getRuleMin() && !$payment->getRuleMax()) {
+                return true;
+            }
+
+            if (($payment->getRuleMin() && $payment->getRuleMin() > $totalPayment)
+                or ($payment->getRuleMax() && $payment->getRuleMax() < $totalPayment)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        return $Payments;
+    }
+
 }
