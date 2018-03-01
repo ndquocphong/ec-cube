@@ -2,13 +2,13 @@
 
 {% block form_errors -%}
     {% if errors|length > 0 -%}
-    {% if form.parent %}<span class="help-block">{% else %}<div class="alert">{% endif %}
-    <ul class="list-unstyled">
+        {% if form.parent %}<span class="help-block">{% else %}<div class="alert">{% endif %}
+        <ul class="list-unstyled">
         {%- for error in errors -%}
             <p class="errormsg text-danger">{{ error.message |trans }}</p>
         {%- endfor -%}
     </ul>
-    {% if form.parent %}</span>{% else %}</div>{% endif %}
+        {% if form.parent %}</span>{% else %}</div>{% endif %}
     {%- endif %}
 {%- endblock form_errors %}
 
@@ -30,10 +30,43 @@
     </div>
 {%- endblock zip_widget -%}
 
+{%- block choice_widget_expanded -%}
+    {% if freeze is defined and freeze %}
+        {%- if freeze_display_text -%}
+            {{ form.vars.data.name|default(form.vars.data) }}
+        {%- endif -%}
+        <input type="hidden" value="{{ form.vars.data.id|default(form.vars.data) }}" {{ block('widget_attributes') }} />
+    {%- else -%}
+        {% set attr = attr|merge({class: attr.class|default('')}) %}
+        {% if attr.class == "checkbox" %}
+            {% for child in form %}
+                {% if child.vars.value == 1 %}
+                    {{- form_widget(child, {
+                        parent_label_class: label_attr.class|default(''),
+                        translation_domain: choice_translation_domain,
+                        attr : {class: attr.class}
+                    }) -}}
+
+                    {#Todo: implement label#}
+                    <label for="{{ child.vars.id }}" {% if label_attr.class|default('') %} class="{{ label_attr.class|default('') }}"{% endif %}></label>
+                {% endif %}
+            {% endfor %}
+
+        {% else %}
+            {{- parent() -}}
+        {% endif %}
+    {%- endif -%}
+{%- endblock choice_widget_expanded -%}
+
 {% block radio_widget -%}
-    <div class="radio-inline">
-        {{ parent() }}
-    </div>
+    {% set attr = attr|merge({class: attr.class|default('')}) %}
+    {% if attr.class == "checkbox" %}
+        <input type="checkbox" {{ block('widget_attributes') }}{% if value is defined %} value="{{ value }}"{% endif %}{% if checked %} checked="checked"{% endif %} />
+    {% else %}
+        <div class="radio-inline">
+            {{ parent() }}
+        </div>
+    {% endif %}
 {%- endblock radio_widget %}
 
 {% block checkbox_widget -%}
@@ -45,9 +78,8 @@
 {% block money_widget -%}
     {% set attr = attr|merge({class: attr.class|default('')}) %}
     {% if attr.class == 'notmoney' %}
-    <div class="input-group">
-        {{- block('form_widget_simple') -}}
-    </div>
+        {% set attr = attr|merge({class: attr.class|default('') ~ ' form-control'}) %}
+        <input type="number" {{ block('widget_attributes') }}{% if value is defined %} value="{{ value }}"{% endif %}>
     {% else %}
         {{ parent() }}
     {% endif %}
