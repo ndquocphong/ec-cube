@@ -38,6 +38,8 @@ eccube_setup: &eccube_setup |
   bin/console doctrine:database:create
   bin/console doctrine:schema:create
   bin/console eccube:fixtures:load
+  bin/console eccube:generate:proxies
+  composer dump-autoload
 
 jobs:
   include:
