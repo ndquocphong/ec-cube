@@ -41,8 +41,8 @@ eccube_setup: &eccube_setup |
 
 generate_proxy: &generate_proxy |
     bin/console eccube:generate:proxies
-    bin/console doctrine:schema:update --force
     composer dump-autoload
+    bin/console doctrine:schema:update --force
 
 jobs:
   include:
