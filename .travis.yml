@@ -86,3 +86,4 @@ jobs:
     - <<: *e2e_test
       env: GROUP=front APP_ENV=codeception DATABASE_URL=postgres://postgres:password@localhost/eccube_db DATABASE_SERVER_VERSION=9 MAILER_URL=smtp://localhost:1025
 
+
