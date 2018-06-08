@@ -39,7 +39,7 @@ eccube_setup: &eccube_setup |
   bin/console doctrine:schema:create
   bin/console eccube:fixtures:load
 
-generate_proxy: & generate_proxy |
+generate_proxy: &generate_proxy |
     bin/console eccube:generate:proxies
     composer dump-autoload
 
@@ -76,7 +76,6 @@ jobs:
       install:
         - *composer_install
         - *eccube_setup
-        - *generate_proxy
       env: GROUP=admin01 APP_ENV=codeception DATABASE_URL=postgres://postgres:password@localhost/eccube_db DATABASE_SERVER_VERSION=9 MAILER_URL=smtp://localhost:1025
       script: ./codeception.sh -g ${GROUP}
     - <<: *e2e_test
