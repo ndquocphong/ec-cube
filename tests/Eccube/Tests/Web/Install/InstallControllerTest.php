@@ -59,6 +59,8 @@ class InstallControllerTest extends AbstractWebTestCase
 
         $this->session = new Session(new MockArraySessionStorage());
         $this->controller = new InstallController($encoder, $cacheUtil);
+        $this->controller->setContainer($this->container);
+        $this->controller->setEntityManager($this->container->get('doctrine')->getManager());
         $this->controller->setFormFactory($formFactory);
         $this->controller->setSession($this->session);
 
