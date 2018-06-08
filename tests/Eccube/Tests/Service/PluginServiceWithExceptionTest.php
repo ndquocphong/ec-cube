@@ -25,6 +25,10 @@ use Symfony\Component\Yaml\Yaml;
  * このクラスは、 setUp()/tearDown() で begin/rollback しないようにし、
  * 実装コード内での rollback を検証する.
  */
+
+/**
+ * @group cache-clear
+ */
 class PluginServiceWithExceptionTest extends AbstractServiceTestCase
 {
     /**

@@ -24,6 +24,9 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * @group cache-clear
+ */
 class PluginServiceTest extends AbstractServiceTestCase
 {
     /**
@@ -73,7 +76,7 @@ class PluginServiceTest extends AbstractServiceTestCase
         }
 
         foreach (glob($this->container->getParameter('kernel.project_dir').'/app/proxy/entity/*.php') as $file) {
-            unlink($file);
+//            unlink($file);
         }
 
         $this->deleteAllRows(['dtb_plugin_event_handler', 'dtb_plugin']);
